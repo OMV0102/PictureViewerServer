@@ -174,16 +174,18 @@ namespace PictureViewerServer
         private int ResponceGetImage(string name, out string message)
         {
             message = "";
+            name = Utility.Base64DecodeString(name);
             // Существует ли такой файл
             if (!File.Exists(Server.DirectoryRoot + "\\" + name))
             {
                 message = "Файл " + name + " не найден!";
+                message = Utility.Base64EncodeString(message);
                 return 404;
             }
 
             byte[] imageBytes = Utility.ImageFileToBytes(Server.DirectoryRoot + "\\" + name);
             // байты картинки в Base64
-            message = Utility.Base64Encode(imageBytes);
+            message = Utility.Base64EncodeBytes(imageBytes);
             return 200;
         }
 
@@ -191,16 +193,16 @@ namespace PictureViewerServer
         private int ResponceGetListImages(out string message)
         {
             message = "";
-            string separator = "=";
+            string separatorFileNames = "=";
             string[] ImagesName = Directory.GetFiles(Server.DirectoryRoot);
 
             foreach (string image in ImagesName)
             {
-                message += image + separator;
+                message += image + separatorFileNames;
             }
-            message = Utility.Base64Encode(Encoding.UTF8.GetBytes(message));
+            message = Utility.Base64EncodeString(message);
             // количество файлов + разделитель_имен_файлов + список файлой в Base64
-            message = ImagesName.Length.ToString() + " " + separator + message;
+            message = ImagesName.Length.ToString() + " " + separatorFileNames + " " + message;
 
             return 200;
         }
@@ -209,27 +211,37 @@ namespace PictureViewerServer
         private int ResponceEditImage(string name, string Base64Image, out string message)
         {
             message = "";
+            name = Utility.Base64DecodeString(name);
             // Существует ли такой файл
             if (!File.Exists(Server.DirectoryRoot + "\\" + name))
             {
                 message = "Файл " + name + " не найден." + Environment.NewLine + "сохранение невозможно.";
+                message = Utility.Base64EncodeString(message);
                 return 404;
             }
 
             // преобразовали строку_Base64 в байты, затем в Image
-            Image image = Utility.BytesToImage(Utility.Base64Decode(Base64Image));
+            Image image = Utility.BytesToImage(Utility.Base64DecodeBytes(Base64Image));
             // Удалили старое изображения
             File.Delete(Server.DirectoryRoot + "\\" + name);
+            if (File.Exists(Server.DirectoryRoot + "\\" + name))
+            {
+                message = "Не удалось удалить предыдущую версию картинки " + name +" по неизвестной причине.";
+                message = Utility.Base64EncodeString(message);
+                return 500;
+            }
             Utility.ImageObjectSave(image, Server.DirectoryRoot + "\\" + name); // сохранили
             // проверили
             if (File.Exists(Server.DirectoryRoot + "\\" + name))
             {
                 message = "Файл " + name + " успешно изменен.";
+                message = Utility.Base64EncodeString(message);
                 return 200;
             }
             else
             {
                 message = "Файл " + name + " был удален, но новый сохранить не удалось.";
+                message = Utility.Base64EncodeString(message);
                 return 500;
             }
         }
@@ -238,10 +250,12 @@ namespace PictureViewerServer
         private int ResponceDeleteImage(string name, out string message)
         {
             message = "";
+            name = Utility.Base64DecodeString(name);
             // Существует ли такой файл
             if (!File.Exists(Server.DirectoryRoot + "\\" + name))
             {
                 message = "Файл " + name + " уже был удален ранее.";
+                message = Utility.Base64EncodeString(message);
                 return 200;
             }
             File.Delete(Server.DirectoryRoot + "\\" + name); // удалили
@@ -249,11 +263,13 @@ namespace PictureViewerServer
             if (!File.Exists(Server.DirectoryRoot + "\\" + name))
             {
                 message = "Файл " + name + " успешно удален.";
+                message = Utility.Base64EncodeString(message);
                 return 200;
             }
             else
             {
                 message = "Файл " + name + " не был удален, по неизвестной ошибке.";
+                message = Utility.Base64EncodeString(message);
                 return 500;
             }
         }
@@ -262,26 +278,30 @@ namespace PictureViewerServer
         private int ResponceNewImage(string name, string Base64Image, out string message)
         {
             message = "";
+            name = Utility.Base64DecodeString(name);
             // Существует ли такой файл
             if (File.Exists(Server.DirectoryRoot + "\\" + name))
             {
                 message = "Файл " + name + " уже существует." + Environment.NewLine + "Задайте другое имя или сначала удалите файл.";
+                message = Utility.Base64EncodeString(message);
                 return 403;
             }
 
             // преобразовали строку_Base64 в байты, затем в Image
-            Image image = Utility.BytesToImage(Utility.Base64Decode(Base64Image));
+            Image image = Utility.BytesToImage(Utility.Base64DecodeBytes(Base64Image));
             // Удалили старое изображения
             Utility.ImageObjectSave(image, Server.DirectoryRoot + "\\" + name); // сохранили
             // проверили
             if (File.Exists(Server.DirectoryRoot + "\\" + name))
             {
                 message = "Новый файл " + name + " успешно загружен.";
+                message = Utility.Base64EncodeString(message);
                 return 200;
             }
             else
             {
                 message = "Новый файл " + name + " не был загружен, по неизвестной ошибке.";
+                message = Utility.Base64EncodeString(message);
                 return 500;
             }
         }

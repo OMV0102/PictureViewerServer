@@ -60,8 +60,8 @@ namespace PictureViewerServer
             }
         }
 
-        // Преобразовать массив байтов в объект типа Image
-        public static Image BytesToImage(byte[] imgBytes)
+        // Преобразовать специальный массив байтов в объект типа Image
+        public static Image BytesToImageObject(byte[] imgBytes)
         {
             MemoryStream ms = new MemoryStream(imgBytes);
             Image img = Image.FromStream(ms);
@@ -76,15 +76,28 @@ namespace PictureViewerServer
         }
 
         // Байты в строку Base64
-        public static string Base64Encode(byte[] textBytes)
+        public static string Base64EncodeBytes(byte[] textBytes)
         {
             return Convert.ToBase64String(textBytes);
         }
 
+        // String в строку Base64
+        public static string Base64EncodeString(string textBytes)
+        {
+
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(textBytes));
+        }
+
         // Строку Base64 в байты
-        public static byte[] Base64Decode(string textBase64)
+        public static byte[] Base64DecodeBytes(string textBase64)
         {
             return Convert.FromBase64String(textBase64);
+        }
+
+        // Строку Base64 в String
+        public static string Base64DecodeString(string textBase64)
+        {
+            return Encoding.UTF8.GetString(Convert.FromBase64String(textBase64));
         }
     }
 }
