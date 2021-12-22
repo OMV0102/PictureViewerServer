@@ -18,7 +18,7 @@ namespace PictureViewerServer
             InitializeComponent();
         }
 
-        Thread threadSerever;
+        private Server s;
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -26,21 +26,16 @@ namespace PictureViewerServer
             numericUpDown1.Enabled = false;
             button1.Enabled = false;
 
-            threadSerever = new Thread(StartServer); // создание отдельного потока с указанием делегата
-            threadSerever.Start(); // запуск потока
-        }
-
-        private void StartServer()
-        {
             int port = Convert.ToInt32(numericUpDown1.Value);
             // Создадим новый сервер и укажем порт 
-            new Server(port);
+            s = new Server(port);
         }
 
         // перед закрытие формы
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
-            threadSerever.Abort();
+            s.threadServer.Abort();
+            
         }
     }
 }

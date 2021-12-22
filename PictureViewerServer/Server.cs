@@ -12,19 +12,27 @@ namespace PictureViewerServer
 
     public class Server
     {
-        TcpListener Listener; // Объект, принимающий TCP-клиентов
+        private TcpListener Listener; // Объект, принимающий TCP-клиентов
+        public Thread threadServer; // поток, обрабатывающий в цикле клиентов
         // Корневая папка, где будут храниться все фото (рабочий стол, папка ImagesForPictureViewer)
         public static string DirectoryRoot = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + "\\ImagesForPictureViewer";
 
-        // Запуск сервера
+        // Конструктор класса
         public Server(int Port)
         {
             // Создаем "слушателя" для указанного порта
             Listener = new TcpListener(IPAddress.Any, Port);
             Listener.Start(); // Запускаем его
 
-            // В бесконечном цикле
-            while (true)
+            threadServer = new Thread(StartServer); // создание отдельного потока с указанием делегата
+            threadServer.IsBackground = true;
+            threadServer.Start(); // запуск потока
+        }
+
+        private void StartServer()
+        {
+            // В бесконечном цикле обрабатываем клиентов
+            while (threadServer.ThreadState == ThreadState.Running)
             {
                 // Принимаем нового клиента
                 TcpClient Client = Listener.AcceptTcpClient();
