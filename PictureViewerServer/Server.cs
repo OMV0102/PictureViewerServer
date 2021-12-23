@@ -32,7 +32,8 @@ namespace PictureViewerServer
         private void StartServer()
         {
             // В бесконечном цикле обрабатываем клиентов
-            while (threadServer.ThreadState == ThreadState.Running)
+            //while (threadServer.ThreadState == ThreadState.Running)
+            while (threadServer.ThreadState == ThreadState.Background)
             {
                 // Принимаем нового клиента
                 TcpClient Client = Listener.AcceptTcpClient();

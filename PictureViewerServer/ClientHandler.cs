@@ -19,7 +19,7 @@ namespace PictureViewerServer
             // Объявим строку, в которой будет хранится запрос клиента
             string Request = "";
             // Буфер для хранения принятых от клиента данных
-            byte[] Buffer = new byte[4096];
+            byte[] Buffer = new byte[10000000];
             // Переменная для хранения количества байт, принятых от клиента
             int Count;
             // Читаем из потока клиента до тех пор, пока от него поступают данные
@@ -55,11 +55,11 @@ namespace PictureViewerServer
                         switch (RequestWords[1])
                         {
                             // Получить картинку по имени
-                            case "IMAGE": // GET IMAGE имя_картинки
+                            case "IMAGE": // GET IMAGE имя_картинки_Base64
                             {
                                 if (RequestWords.Length < 3)
                                 {
-                                    SendMessage(Client, 400, "Для данного запроса не хватает параметров.");
+                                    SendMessage(Client, 400, Utility.Base64EncodeString("Для данного запроса не хватает параметров."));
                                     return;
                                 }
                                 CodeResponce = ResponceGetImage(RequestWords[2], out MessageResponse);
@@ -86,11 +86,11 @@ namespace PictureViewerServer
                         switch (RequestWords[1])
                         {
                             // Сохранить изменную картинку по имени
-                            case "EDIT": // PUT EDIT имя_картинки Base64_данные
+                            case "EDIT": // PUT EDIT имя_картинки_Base64 Base64_данные
                             {
                                 if (RequestWords.Length < 4)
                                 {
-                                    SendMessage(Client, 400, "Для данного запроса не хватает параметров.");
+                                    SendMessage(Client, 400, Utility.Base64EncodeString("Для данного запроса не хватает параметров."));
                                     return;
                                 }
                                 CodeResponce = ResponceEditImage(RequestWords[2], RequestWords[3], out MessageResponse);
@@ -99,11 +99,11 @@ namespace PictureViewerServer
                             }
 
                             // Удалить картинку по имени
-                            case "DELETE": // PUT DELETE имя_картинки
+                            case "DELETE": // PUT DELETE имя_картинки_Base64
                             {
                                 if (RequestWords.Length < 3)
                                 {
-                                    SendMessage(Client, 400, "Для данного запроса не хватает параметров.");
+                                    SendMessage(Client, 400, Utility.Base64EncodeString("Для данного запроса не хватает параметров."));
                                     return;
                                 }
                                 CodeResponce = ResponceDeleteImage(RequestWords[2], out MessageResponse);
@@ -122,14 +122,14 @@ namespace PictureViewerServer
                         switch (RequestWords[1])
                         {
                             // Загрузить на сервер новую картинку
-                            case "NEW": // POST NEW имя_картинки Base64_данные
+                            case "NEW": // POST NEW имя_картинки_Base64 Base64_данные
                             {
                                 if (RequestWords.Length < 4)
                                 {
-                                    SendMessage(Client, 400, "Для данного запроса не хватает параметров.");
+                                    SendMessage(Client, 400, Utility.Base64EncodeString("Для данного запроса не хватает параметров."));
                                     return;
                                 }
-                                CodeResponce = ResponceEditImage(RequestWords[2], RequestWords[3], out MessageResponse);
+                                CodeResponce = ResponceNewImage(RequestWords[2], RequestWords[3], out MessageResponse);
                                 SendMessage(Client, CodeResponce, MessageResponse);
                                 break;
                             }
@@ -141,13 +141,13 @@ namespace PictureViewerServer
                     }
 
                     default:
-                        SendMessage(Client, 400, "Сервер не смог разобрать запрос.");
+                        SendMessage(Client, 400, Utility.Base64EncodeString("Сервер не смог разобрать запрос."));
                         break;
                 }
             }
             catch (Exception err)
             {
-                SendMessage(Client, 500, "Внутренняя ошибка сервера" + Environment.NewLine + err.Message);
+                SendMessage(Client, 500, Utility.Base64EncodeString("Внутренняя ошибка сервера" + Environment.NewLine + err.Message));
             }
             finally
             {
@@ -162,7 +162,7 @@ namespace PictureViewerServer
         private void SendMessage(TcpClient Client, int Code, string message = "")
         {
             string Responce = Code.ToString(); // код
-            Responce += message.Length > 0 ? (" " + message) : " ResponseIsEmpty"; // текст сообщения если не пустое
+            Responce += message.Length > 0 ? (" " + message) : Utility.Base64EncodeString(" ResponseIsEmpty"); // текст сообщения если не пустое
             Responce += " \r\n\r\n";  // конец ответа
             // Приведем строку к байтам
             byte[] Buffer = Encoding.UTF8.GetBytes(Responce);
@@ -196,9 +196,9 @@ namespace PictureViewerServer
             string separatorFileNames = "=";
             string[] ImagesName = Directory.GetFiles(Server.DirectoryRoot);
 
-            foreach (string image in ImagesName)
+            foreach (string imageName in ImagesName)
             {
-                message += image + separatorFileNames;
+                message += imageName.Substring(imageName.LastIndexOf("\\")+1) + separatorFileNames;
             }
             message = Utility.Base64EncodeString(message);
             // количество файлов + разделитель_имен_файлов + список файлой в Base64
@@ -221,7 +221,7 @@ namespace PictureViewerServer
             }
 
             // преобразовали строку_Base64 в байты, затем в Image
-            Image image = Utility.BytesToImage(Utility.Base64DecodeBytes(Base64Image));
+            Image image = Utility.BytesToImageObject(Utility.Base64DecodeBytes(Base64Image));
             // Удалили старое изображения
             File.Delete(Server.DirectoryRoot + "\\" + name);
             if (File.Exists(Server.DirectoryRoot + "\\" + name))
@@ -275,10 +275,10 @@ namespace PictureViewerServer
         }
 
         // Загрузить новую картинку
-        private int ResponceNewImage(string name, string Base64Image, out string message)
+        private int ResponceNewImage(string Base64name, string Base64Image, out string message)
         {
             message = "";
-            name = Utility.Base64DecodeString(name);
+            string name = Utility.Base64DecodeString(Base64name);
             // Существует ли такой файл
             if (File.Exists(Server.DirectoryRoot + "\\" + name))
             {
@@ -288,7 +288,7 @@ namespace PictureViewerServer
             }
 
             // преобразовали строку_Base64 в байты, затем в Image
-            Image image = Utility.BytesToImage(Utility.Base64DecodeBytes(Base64Image));
+            Image image = Utility.BytesToImageObject(Utility.Base64DecodeBytes(Base64Image));
             // Удалили старое изображения
             Utility.ImageObjectSave(image, Server.DirectoryRoot + "\\" + name); // сохранили
             // проверили
