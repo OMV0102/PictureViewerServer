@@ -15,7 +15,8 @@ namespace PictureViewerServer
         private TcpListener Listener; // Объект, принимающий TCP-клиентов
         public Thread threadServer; // поток, обрабатывающий в цикле клиентов
         // Корневая папка, где будут храниться все фото (рабочий стол, папка ImagesForPictureViewer)
-        public static string DirectoryRoot = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + "\\ImagesForPictureViewer";
+        //public static string DirectoryRoot = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + "\\ImagesForPictureViewer";
+        public static string DirectoryRoot = "K:" + "\\ImagesForPictureViewer";
 
         // Конструктор класса
         public Server(int Port)
